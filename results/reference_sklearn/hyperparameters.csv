@@ -1,0 +1,5 @@
+season,model_type,n_outputs,optimized_kernel,constant_value,rbf_length_scale,white_noise_level,alpha,log_marginal_likelihood
+winter,single_multioutput_gpr,43,3.12**2 * RBF(length_scale=37.6) + WhiteKernel(noise_level=0.0255),9.722364539218145,37.557801098106665,0.0254689148724428,1e-10,42535.78941213911
+spring,single_multioutput_gpr,43,2.96**2 * RBF(length_scale=37.2) + WhiteKernel(noise_level=0.0121),8.750371351074493,37.15931909353137,0.0121025378918996,1e-10,86778.52594922621
+summer,single_multioutput_gpr,43,2.7**2 * RBF(length_scale=34) + WhiteKernel(noise_level=0.0155),7.282816534846558,34.04484554183859,0.0155042469967079,1e-10,71716.89814391501
+autumn,single_multioutput_gpr,43,2.48**2 * RBF(length_scale=27.3) + WhiteKernel(noise_level=0.0193),6.168917093779459,27.29846235061429,0.0192794892003507,1e-10,55508.77946222603
