@@ -230,6 +230,14 @@ def main():
     metrics.to_csv(files["metrics"], index=False)
     hyperparameters.to_csv(files["hyperparameters"], index=False)
 
+    # Backends with their own optimizer (GPyTorch) also log every start.
+    optimization_logs = sorted(run_dir.glob("optimization_log_*.csv"))
+    if optimization_logs:
+        files["optimization_log"] = out_dir / "optimization_log.csv"
+        pd.concat([pd.read_csv(path) for path in optimization_logs], ignore_index=True).to_csv(
+            files["optimization_log"], index=False
+        )
+
     manifest = {
         "variant": args.variant,
         "source_run_directory": str(run_dir),
@@ -241,6 +249,8 @@ def main():
                 "network",
                 "experiment",
                 "model_type",
+                "model_backend",
+                "gp_variant",
                 "kernel",
                 "gpr_alpha",
                 "use_measurement_noise",
