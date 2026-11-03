@@ -21,6 +21,7 @@ from sklearn.preprocessing import StandardScaler
 from config import (
     ANGLE_STD_DEGREE,
     GPR_ALPHA,
+    GP_ICM_RANK,
     GP_VARIANT,
     KERNEL_RUN_LABEL,
     MEASUREMENTS,
@@ -241,11 +242,12 @@ def annual_run_directory(network, use_noise=USE_MEASUREMENT_NOISE):
     )
 
 
-def model_run_suffix(backend=MODEL_BACKEND, variant=GP_VARIANT):
+def model_run_suffix(backend=MODEL_BACKEND, variant=GP_VARIANT, rank=GP_ICM_RANK):
     """Run-directory suffix of a non-default backend; empty for sklearn."""
     if backend == "sklearn":
         return ""
-    return f"_{safe_name(backend)}_{safe_name(variant)}"
+    suffix = f"_{safe_name(backend)}_{safe_name(variant)}"
+    return suffix + (f"_r{int(rank)}" if variant == "icm" else "")
 
 
 def seasonal_run_directory(network, use_noise=USE_MEASUREMENT_NOISE):
@@ -1323,7 +1325,7 @@ class DSSEGaussianProcess:
         )
 
 
-def make_gp_model(backend=MODEL_BACKEND, variant=GP_VARIANT):
+def make_gp_model(backend=MODEL_BACKEND, variant=GP_VARIANT, rank=GP_ICM_RANK):
     """Return an unfitted season model for the configured backend.
 
     The default is the original sklearn DSSEGaussianProcess. The GPyTorch
@@ -1334,7 +1336,7 @@ def make_gp_model(backend=MODEL_BACKEND, variant=GP_VARIANT):
     if backend == "gpytorch":
         from gpytorch_models import GPyTorchDSSEGaussianProcess
 
-        return GPyTorchDSSEGaussianProcess(variant=variant)
+        return GPyTorchDSSEGaussianProcess(variant=variant, rank=rank)
     raise ValueError(f"Unknown MODEL_BACKEND {backend!r}; expected 'sklearn' or 'gpytorch'.")
 
 

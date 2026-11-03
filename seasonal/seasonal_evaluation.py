@@ -20,6 +20,7 @@ import pandas as pd
 
 from config import (
     GPR_ALPHA,
+    GP_ICM_RANK,
     GP_VARIANT,
     KERNEL_NAME,
     KERNEL_RUN_LABEL,
@@ -387,10 +388,10 @@ def main():
         joblib.dump(model, out_dir / model_filename)
         model_files[season] = model_filename
 
-        if hasattr(model, "optimization_log"):
-            model.optimization_log().assign(season=season).to_csv(
-                out_dir / f"optimization_log_{season}.csv", index=False
-            )
+        # Backends with their own optimizer (GPyTorch) save extra per-season tables.
+        if hasattr(model, "extra_outputs"):
+            for name, frame in model.extra_outputs().items():
+                frame.assign(season=season).to_csv(out_dir / f"{name}_{season}.csv", index=False)
 
         kernel_summary = model.kernel_summary().copy()
         kernel_summary.insert(0, "season", season)
@@ -724,7 +725,8 @@ def main():
         "model_type": "four_season_specific_multioutput_gprs",
         "model_backend": MODEL_BACKEND,
         "gp_variant": GP_VARIANT if MODEL_BACKEND != "sklearn" else None,
-        "outputs_correlated": False,
+        "gp_icm_rank": GP_ICM_RANK if MODEL_BACKEND != "sklearn" and GP_VARIANT == "icm" else None,
+        "outputs_correlated": MODEL_BACKEND != "sklearn" and GP_VARIANT in ("icm", "lmc"),
         "kernel": KERNEL_NAME,
         "kernel_run_label": KERNEL_RUN_LABEL,
         "kernel_signal_component": "ConstantKernel * RBF",

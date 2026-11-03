@@ -49,6 +49,7 @@ PIPELINE_METRIC_COLUMNS = {
     "coverage_95": "voltage_coverage_95",
     "mean_pi_width_95_pu": "voltage_mean_interval_width_95_pu",
 }
+EXTRA_TABLES = ["optimization_log", "task_parameters", "task_covariance"]
 PACKAGES = ["numpy", "pandas", "scipy", "scikit-learn", "pandapower", "simbench", "torch", "gpytorch"]
 
 
@@ -230,13 +231,15 @@ def main():
     metrics.to_csv(files["metrics"], index=False)
     hyperparameters.to_csv(files["hyperparameters"], index=False)
 
-    # Backends with their own optimizer (GPyTorch) also log every start.
-    optimization_logs = sorted(run_dir.glob("optimization_log_*.csv"))
-    if optimization_logs:
-        files["optimization_log"] = out_dir / "optimization_log.csv"
-        pd.concat([pd.read_csv(path) for path in optimization_logs], ignore_index=True).to_csv(
-            files["optimization_log"], index=False
-        )
+    # Backends with their own optimizer (GPyTorch) also save per-season tables:
+    # every optimizer start, and for multi-task variants the per-bus parameters.
+    for name in EXTRA_TABLES:
+        season_files = sorted(run_dir.glob(f"{name}_*.csv"))
+        if season_files:
+            files[name] = out_dir / f"{name}.csv"
+            pd.concat([pd.read_csv(path) for path in season_files], ignore_index=True).to_csv(
+                files[name], index=False
+            )
 
     manifest = {
         "variant": args.variant,
@@ -251,6 +254,8 @@ def main():
                 "model_type",
                 "model_backend",
                 "gp_variant",
+                "gp_icm_rank",
+                "outputs_correlated",
                 "kernel",
                 "gpr_alpha",
                 "use_measurement_noise",

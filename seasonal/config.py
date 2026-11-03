@@ -52,6 +52,8 @@ GPR_ALPHA = 1e-10
 # GP_VARIANT (gpytorch only): "shared" (default) | "icm" | "lmc"
 MODEL_BACKEND = os.environ.get("DSSE_MODEL_BACKEND", "sklearn")
 GP_VARIANT = os.environ.get("DSSE_GP_VARIANT", "shared")
+# Rank r of the ICM task covariance B = W W^T + diag(v) (GP_VARIANT == "icm").
+GP_ICM_RANK = int(os.environ.get("DSSE_ICM_RANK", "1"))
 
 # GPyTorch hyperparameter optimization (used only when MODEL_BACKEND == "gpytorch").
 # Kernel structure, initial values and bounds are taken from build_kernel(), so
@@ -59,6 +61,8 @@ GP_VARIANT = os.environ.get("DSSE_GP_VARIANT", "shared")
 GPYTORCH_SEED = 42
 GPYTORCH_N_RESTARTS = 4  # random log-uniform starts in addition to the initial values
 GPYTORCH_LBFGS_MAX_ITER = 200
+# ICM starts: the fitted shared model, then the sklearn initial values.
+GPYTORCH_ICM_N_STARTS = 2
 
 # Measurement noise
 USE_MEASUREMENT_NOISE = True
