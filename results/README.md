@@ -9,6 +9,14 @@ from a finished seasonal run (`python export_results.py --variant <name>`).
 | `metrics.csv` | Per season and pooled, for `unmeasured_only` and `all_predicted_buses`: RMSE, MAE, max absolute error, coverage_95, mean 95% PI width (all in pu) |
 | `hyperparameters.csv` | Learned kernel hyperparameters per season, as reported by the model's `kernel_summary()` |
 | `manifest.json` | Git commit, package versions, split/sensor/seed settings, consistency check against the pipeline's own metric files, file hashes |
+| `optimization_log.csv` | Only for backends with their own optimizer (GPyTorch): every start, its final hyperparameters and log marginal likelihood |
+
+Variant folders:
+
+| Folder | Run |
+|---|---|
+| `reference_sklearn/` | Default run (`MODEL_BACKEND = "sklearn"`), original code |
+| `gpytorch_shared/` | `DSSE_MODEL_BACKEND=gpytorch DSSE_GP_VARIANT=shared`; also holds the equivalence checks written by `seasonal/gpytorch_equivalence.py` (`equivalence_fixed_hyperparameters.csv`, `comparison_*_vs_sklearn.csv`) |
 
 `predictions.parquet` columns:
 
