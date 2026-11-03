@@ -21,8 +21,10 @@ from sklearn.preprocessing import StandardScaler
 from config import (
     ANGLE_STD_DEGREE,
     GPR_ALPHA,
+    GP_VARIANT,
     KERNEL_RUN_LABEL,
     MEASUREMENTS,
+    MODEL_BACKEND,
     N_TRAINING_DAYS,
     N_TRAINING_DAYS_PER_SEASON,
     SEASON_DAY_RANGES,
@@ -239,8 +241,19 @@ def annual_run_directory(network, use_noise=USE_MEASUREMENT_NOISE):
     )
 
 
+def model_run_suffix(backend=MODEL_BACKEND, variant=GP_VARIANT):
+    """Run-directory suffix of a non-default backend; empty for sklearn."""
+    if backend == "sklearn":
+        return ""
+    return f"_{safe_name(backend)}_{safe_name(variant)}"
+
+
 def seasonal_run_directory(network, use_noise=USE_MEASUREMENT_NOISE):
-    """Output directory for the four season-specific GPR experiment."""
+    """Output directory for the four season-specific GPR experiment.
+
+    The sklearn default keeps the original directory name; other backends get
+    their own directory so they never overwrite the sklearn reference run.
+    """
     noise = "noisy" if use_noise else "clean"
     return (
         Path(OUTPUT_ROOT)
@@ -250,6 +263,7 @@ def seasonal_run_directory(network, use_noise=USE_MEASUREMENT_NOISE):
             f"4gpr_{KERNEL_RUN_LABEL}_"
             f"train_{N_TRAINING_DAYS_PER_SEASON:02d}_"
             f"all_remaining_test_{noise}"
+            f"{model_run_suffix()}"
         )
     )
 
@@ -1307,6 +1321,21 @@ class DSSEGaussianProcess:
                 }
             ]
         )
+
+
+def make_gp_model(backend=MODEL_BACKEND, variant=GP_VARIANT):
+    """Return an unfitted season model for the configured backend.
+
+    The default is the original sklearn DSSEGaussianProcess. The GPyTorch
+    backend is imported lazily so the default run does not need torch.
+    """
+    if backend == "sklearn":
+        return DSSEGaussianProcess()
+    if backend == "gpytorch":
+        from gpytorch_models import GPyTorchDSSEGaussianProcess
+
+        return GPyTorchDSSEGaussianProcess(variant=variant)
+    raise ValueError(f"Unknown MODEL_BACKEND {backend!r}; expected 'sklearn' or 'gpytorch'.")
 
 
 def evaluate(y_true, y_pred, sigma):

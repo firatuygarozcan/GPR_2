@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 # Network and measurements
@@ -43,6 +44,21 @@ N_TRAINING_DAYS = N_TRAINING_DAYS_PER_SEASON
 KERNEL_RUN_LABEL = "constant_rbf_white_alpha1e-10"
 KERNEL_NAME = "ConstantKernel * RBF + WhiteKernel"
 GPR_ALPHA = 1e-10
+
+# Model backend. The defaults reproduce the original sklearn experiment exactly.
+# The environment variables only allow choosing another backend per run without
+# editing this file; leaving them unset keeps the defaults.
+# MODEL_BACKEND: "sklearn" (default) | "gpytorch"
+# GP_VARIANT (gpytorch only): "shared" (default) | "icm" | "lmc"
+MODEL_BACKEND = os.environ.get("DSSE_MODEL_BACKEND", "sklearn")
+GP_VARIANT = os.environ.get("DSSE_GP_VARIANT", "shared")
+
+# GPyTorch hyperparameter optimization (used only when MODEL_BACKEND == "gpytorch").
+# Kernel structure, initial values and bounds are taken from build_kernel(), so
+# both backends optimize the same hyperparameters inside the same bounds.
+GPYTORCH_SEED = 42
+GPYTORCH_N_RESTARTS = 4  # random log-uniform starts in addition to the initial values
+GPYTORCH_LBFGS_MAX_ITER = 200
 
 # Measurement noise
 USE_MEASUREMENT_NOISE = True

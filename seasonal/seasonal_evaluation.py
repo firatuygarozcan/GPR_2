@@ -20,8 +20,10 @@ import pandas as pd
 
 from config import (
     GPR_ALPHA,
+    GP_VARIANT,
     KERNEL_NAME,
     KERNEL_RUN_LABEL,
+    MODEL_BACKEND,
     NETWORK,
     N_TRAINING_DAYS_PER_SEASON,
     RESOLUTION_MINUTES,
@@ -35,7 +37,6 @@ from config import (
     USE_MEASUREMENT_NOISE,
 )
 from dsse import (
-    DSSEGaussianProcess,
     GAUSSIAN_95_MULTIPLIER,
     add_noise_by_day,
     build_full_year_ground_truth,
@@ -46,6 +47,7 @@ from dsse import (
     get_reference_buses,
     load_ground_truth,
     load_network,
+    make_gp_model,
     seasonal_run_directory,
     seasonal_train_test_split,
     select_measured_buses,
@@ -307,6 +309,8 @@ def main():
     print("Input                       : P,Q,V at fixed measured buses")
     print("Output                      : V at all non-reference buses")
     print(f"Kernel                      : {KERNEL_NAME}")
+    print(f"Model backend               : {MODEL_BACKEND}"
+          + (f" ({GP_VARIANT})" if MODEL_BACKEND != "sklearn" else ""))
     print(f"GPR alpha                   : {GPR_ALPHA:.1e} (numerical jitter only)")
     print("Primary evaluation          : unmeasured buses only")
     print("Secondary evaluation        : all predicted buses incl. measured buses")
@@ -373,7 +377,7 @@ def main():
         Y_train = y_train[target_columns]
 
         fit_start = time.perf_counter()
-        model = DSSEGaussianProcess().fit(X_train, Y_train)
+        model = make_gp_model().fit(X_train, Y_train)
         fit_time = time.perf_counter() - fit_start
         total_fit_time += fit_time
         print(f"Fit time                   : {fit_time:.1f} s")
@@ -382,6 +386,11 @@ def main():
         model_filename = f"trained_gpr_{season}.joblib"
         joblib.dump(model, out_dir / model_filename)
         model_files[season] = model_filename
+
+        if hasattr(model, "optimization_log"):
+            model.optimization_log().assign(season=season).to_csv(
+                out_dir / f"optimization_log_{season}.csv", index=False
+            )
 
         kernel_summary = model.kernel_summary().copy()
         kernel_summary.insert(0, "season", season)
@@ -713,6 +722,8 @@ def main():
         },
         "primary_evaluation_scope": PRIMARY_SCOPE,
         "model_type": "four_season_specific_multioutput_gprs",
+        "model_backend": MODEL_BACKEND,
+        "gp_variant": GP_VARIANT if MODEL_BACKEND != "sklearn" else None,
         "outputs_correlated": False,
         "kernel": KERNEL_NAME,
         "kernel_run_label": KERNEL_RUN_LABEL,
